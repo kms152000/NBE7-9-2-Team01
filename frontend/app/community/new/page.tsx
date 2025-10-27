@@ -30,7 +30,7 @@ export default function NewCommunityPostPage() {
   const [selectedEmotion, setSelectedEmotion] = useState("")
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
-  const [images, setImages] = useState<string[]>([])
+  const [images, setImages] = useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const handleSubmit = async () => {
@@ -45,6 +45,8 @@ export default function NewCommunityPostPage() {
     formData.append("emotion", emoticons.find((e) => e.label === selectedEmotion)?.label || "")
     images.forEach((file) => formData.append("photos", file))
 
+
+
     setIsSubmitting(true)
     try {
       // ✅ 1️⃣ 게시글 작성 요청
@@ -53,7 +55,8 @@ export default function NewCommunityPostPage() {
       })
 
       // ✅ 2️⃣ 목록 새로고침 강제 (CommunityPage에서 fetchPosts가 실행되도록)
-      router.push("/community?refresh=" + Date.now())
+      router.push("/community")
+      router.refresh?.()
 
       alert("게시글이 성공적으로 등록되었습니다.")
     } catch (error) {
@@ -68,7 +71,8 @@ export default function NewCommunityPostPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files) {
-      const newImages = Array.from(files).map((file) => URL.createObjectURL(file))
+      // 2. State에 File 객체 배열을 저장합니다.
+      const newImages = Array.from(files)
       setImages([...images, ...newImages])
     }
   }
@@ -153,26 +157,29 @@ export default function NewCommunityPostPage() {
             <Label className="text-lg font-semibold mb-4 block">사진 추가 (선택)</Label>
             <div className="space-y-4">
               {images.length > 0 && (
-                <div className="grid grid-cols-3 gap-4">
-                  {images.map((image, index) => (
-                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
-                      <img
-                        src={image || "/placeholder.svg"}
-                        alt={`Upload ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <button
-                        onClick={() => removeImage(index)}
-                        className="absolute top-2 right-2 p-1 bg-background/80 rounded-full hover:bg-background"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    {images.map((imageFile, index) => (
+                        <div key={index}
+                             className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                          <img
+                              // 5. File 객체(imageFile)를 URL로 변환하여 src에 넣습니다.
+                              src={URL.createObjectURL(imageFile)}
+                              alt={`Upload ${index + 1}`}
+                              className="w-full h-full object-cover"
+                          />
+                          <button
+                              onClick={() => removeImage(index)}
+                              className="absolute top-2 right-2 p-1 bg-background/80 rounded-full hover:bg-background"
+                          >
+                            <X className="h-4 w-4"/>
+                          </button>
+                        </div>
+                    ))}
+                  </div>
               )}
-              <label className="flex items-center justify-center gap-2 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted transition-colors">
-                <ImagePlus className="h-5 w-5 text-muted-foreground" />
+              <label
+                  className="flex items-center justify-center gap-2 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted transition-colors">
+                <ImagePlus className="h-5 w-5 text-muted-foreground"/>
                 <span className="text-sm text-muted-foreground">사진 추가하기</span>
                 <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
               </label>
